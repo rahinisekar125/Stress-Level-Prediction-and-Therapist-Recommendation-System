@@ -1,36 +1,43 @@
 # Use OpenJDK 17 as base image
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy the WAR file to the container
-COPY target/StressApp.war /app/StressApp.war
-
-# Install Tomcat
+# Install required packages
 RUN apt-get update && \
-    apt-get install -y wget && \
-    wget https://downloads.apache.org/tomcat/tomcat-10/v10.1.31/bin/apache-tomcat-10.1.31.tar.gz && \
+    apt-get install -y wget curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Download and install Tomcat
+RUN wget -q https://downloads.apache.org/tomcat/tomcat-10/v10.1.31/bin/apache-tomcat-10.1.31.tar.gz && \
     tar -xzf apache-tomcat-10.1.31.tar.gz && \
     mv apache-tomcat-10.1.31 tomcat && \
     rm apache-tomcat-10.1.31.tar.gz
 
 # Copy the WAR file to Tomcat webapps directory
-RUN cp /app/StressApp.war /app/tomcat/webapps/
+COPY target/StressApp.war /app/tomcat/webapps/
 
 # Create a startup script that configures Tomcat to use the PORT environment variable
 RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
 # Configure Tomcat to listen on the PORT provided by Render\n\
 if [ -n "$PORT" ]; then\n\
+    echo "Configuring Tomcat to listen on port $PORT"\n\
     sed -i "s/8080/$PORT/g" /app/tomcat/conf/server.xml\n\
-    echo "Tomcat configured to listen on port $PORT"\n\
+    export JPDA_ADDRESS="$PORT"\n\
 else\n\
     echo "PORT environment variable not set, using default port 8080"\n\
 fi\n\
 \n\
 # Start Tomcat\n\
-exec /app/tomcat/bin/catalina.sh run\n\
+cd /app/tomcat/bin\n\
+exec ./catalina.sh run\n\
 ' > /app/start.sh && chmod +x /app/start.sh
+
+# Make sure the WAR file exists
+RUN ls -la /app/tomcat/webapps/
 
 # Expose port (Render will set PORT environment variable)
 EXPOSE 8080
@@ -40,6 +47,10 @@ ENV DATABASE_URL=""
 ENV DATABASE_USERNAME=""
 ENV DATABASE_PASSWORD=""
 ENV PORT=8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:$PORT/StressApp/dbtest || exit 1
 
 # Start the application
 CMD ["/app/start.sh"]
