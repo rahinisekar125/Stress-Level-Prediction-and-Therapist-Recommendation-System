@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  stress-app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=jdbc:postgresql://ep-super-term-ah3xk0bx-pooler.c-3.us-east-1.aws.neon.tech/neondb?user=neondb_owner&password=npg_5bMXL9tCQOBi&sslmode=require&channelBinding=require
+      - DATABASE_USERNAME=neondb_owner
+      - DATABASE_PASSWORD=npg_5bMXL9tCQOBi
+      - PORT=8080
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=stressapp
+      - POSTGRES_USER=stressuser
+      - POSTGRES_PASSWORD=stresspass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -2,3 +2,27 @@
 /.vscode/
 *.class
 *.log
+*.war
+
+# Environment variables
+.env
+.env.local
+
+# IDE files
+.idea/
+*.iml
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Temporary files
+*.tmp
+*.bak

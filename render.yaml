@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: stress-app
+    runtime: docker
+    buildCommand: "mvn clean package -DskipTests"
+    startCommand: "docker run -p $PORT:8080 stress-app"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: PORT
+        generateValue: true
