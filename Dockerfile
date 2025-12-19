@@ -1,12 +1,12 @@
-# Use Eclipse Temurin Java 17 as base image (official OpenJDK replacement)
-FROM eclipse-temurin:17-jdk
+# Use official Tomcat 10.1 with JDK 17
+FROM tomcat:10.1-jdk17
 
 # Install Maven
 RUN apt-get update && \
     apt-get install -y maven && \
     rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Set working directory for build
 WORKDIR /app
 
 # Copy pom.xml first for better Docker layer caching
@@ -18,19 +18,8 @@ COPY src ./src
 # Build the WAR file
 RUN mvn clean package -DskipTests
 
-# Install required packages for Tomcat
-RUN apt-get update && \
-    apt-get install -y wget curl && \
-    rm -rf /var/lib/apt/lists/*
-
-# Download and install Tomcat
-RUN wget -q https://downloads.apache.org/tomcat/tomcat-10/v10.1.31/bin/apache-tomcat-10.1.31.tar.gz && \
-    tar -xzf apache-tomcat-10.1.31.tar.gz && \
-    mv apache-tomcat-10.1.31 tomcat && \
-    rm apache-tomcat-10.1.31.tar.gz
-
 # Copy the WAR file to Tomcat webapps directory
-COPY target/StressApp.war /app/tomcat/webapps/
+RUN cp /app/target/StressApp.war /usr/local/tomcat/webapps/
 
 # Create a startup script that configures Tomcat to use the PORT environment variable
 RUN echo '#!/bin/bash\n\
@@ -39,19 +28,19 @@ set -e\n\
 # Configure Tomcat to listen on the PORT provided by Render\n\
 if [ -n "$PORT" ]; then\n\
     echo "Configuring Tomcat to listen on port $PORT"\n\
-    sed -i "s/8080/$PORT/g" /app/tomcat/conf/server.xml\n\
+    sed -i "s/8080/$PORT/g" /usr/local/tomcat/conf/server.xml\n\
     export JPDA_ADDRESS="$PORT"\n\
 else\n\
     echo "PORT environment variable not set, using default port 8080"\n\
 fi\n\
 \n\
 # Start Tomcat\n\
-cd /app/tomcat/bin\n\
+cd /usr/local/tomcat/bin\n\
 exec ./catalina.sh run\n\
-' > /app/start.sh && chmod +x /app/start.sh
+' > /usr/local/tomcat/start.sh && chmod +x /usr/local/tomcat/start.sh
 
 # Make sure the WAR file exists
-RUN ls -la /app/tomcat/webapps/
+RUN ls -la /usr/local/tomcat/webapps/
 
 # Expose port (Render will set PORT environment variable)
 EXPOSE 8080
@@ -67,4 +56,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:$PORT/StressApp/dbtest || exit 1
 
 # Start the application
-CMD ["/app/start.sh"]
+CMD ["/usr/local/tomcat/start.sh"]
