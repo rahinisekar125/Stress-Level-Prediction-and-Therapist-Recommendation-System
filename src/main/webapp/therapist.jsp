@@ -219,14 +219,20 @@
         <!-- Results Section -->
         <div class="results-section">
             <h1>🧠 Your Mental Health Assessment Results</h1>
-            <div class="stress-level <%= ((String)request.getAttribute("stressLevel")).toLowerCase() %>">
-                <%= request.getAttribute("stressLevel") %> Stress Level
+            <%
+                String stressLevel = (String) session.getAttribute("stressLevel");
+                if (stressLevel == null) {
+                    stressLevel = "Unknown";
+                }
+            %>
+            <div class="stress-level <%= stressLevel.toLowerCase() %>">
+                <%= stressLevel %> Stress Level
             </div>
             <div class="score-display">
-                📊 Your Score: <%= request.getAttribute("totalScore") %>/20
+                📊 Your Score: <%= session.getAttribute("totalScore") != null ? session.getAttribute("totalScore") : "N/A" %>/20
             </div>
             <div class="advice-text">
-                <%= request.getAttribute("advice") %>
+                <%= session.getAttribute("advice") != null ? session.getAttribute("advice") : "Please complete the stress assessment first." %>
             </div>
         </div>
 

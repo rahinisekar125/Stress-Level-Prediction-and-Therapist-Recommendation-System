@@ -45,6 +45,11 @@ public class StressServlet extends HttpServlet {
             request.setAttribute("stressLevel", stressLevel);
             request.setAttribute("advice", advice);
 
+            // Store assessment results in session for persistence across requests
+            session.setAttribute("stressLevel", stressLevel);
+            session.setAttribute("totalScore", totalScore);
+            session.setAttribute("advice", advice);
+
             // Redirect based on stress level
             request.getRequestDispatcher(redirectPage).forward(request, response);
         } catch (NumberFormatException e) {
