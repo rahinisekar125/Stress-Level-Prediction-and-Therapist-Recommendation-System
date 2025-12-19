@@ -1,10 +1,24 @@
 # Use Eclipse Temurin Java 17 as base image (official OpenJDK replacement)
 FROM eclipse-temurin:17-jdk
 
+# Install Maven
+RUN apt-get update && \
+    apt-get install -y maven && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 
-# Install required packages
+# Copy pom.xml first for better Docker layer caching
+COPY pom.xml .
+
+# Copy source code
+COPY src ./src
+
+# Build the WAR file
+RUN mvn clean package -DskipTests
+
+# Install required packages for Tomcat
 RUN apt-get update && \
     apt-get install -y wget curl && \
     rm -rf /var/lib/apt/lists/*

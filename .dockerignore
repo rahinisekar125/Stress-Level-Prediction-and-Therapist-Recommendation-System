@@ -1,7 +1,7 @@
 # Maven
-target/
+# target/  # Commented out to allow WAR file in Docker build
 *.jar
-*.war
+# *.war     # Commented out to allow WAR file in Docker build
 
 # IDE files
 .idea/
