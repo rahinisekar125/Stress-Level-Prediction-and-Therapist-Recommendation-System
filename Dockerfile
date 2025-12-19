@@ -18,8 +18,11 @@ COPY src ./src
 # Build the WAR file
 RUN mvn clean package -DskipTests
 
-# Copy the WAR file to Tomcat webapps directory
-RUN cp /app/target/StressApp.war /usr/local/tomcat/webapps/
+# Remove default Tomcat webapps and deploy as ROOT.war for clean URLs
+RUN rm -rf /usr/local/tomcat/webapps/*
+
+# Copy the WAR file as ROOT.war to serve at root context path "/"
+RUN cp /app/target/StressApp.war /usr/local/tomcat/webapps/ROOT.war
 
 # Create a startup script that configures Tomcat to use the PORT environment variable
 RUN echo '#!/bin/bash\n\
@@ -53,7 +56,7 @@ ENV PORT=8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:$PORT/StressApp/dbtest || exit 1
+    CMD curl -f http://localhost:$PORT/dbtest || exit 1
 
 # Start the application
 CMD ["/usr/local/tomcat/start.sh"]
