@@ -3,7 +3,10 @@ package com.stress;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.io.IOException;
-import java.util.Map;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class LoginServlet extends HttpServlet {
 
@@ -23,16 +26,48 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        // Check registered users
-        ServletContext context = getServletContext();
-        Map<String, String> users = (Map<String, String>) context.getAttribute("users");
+        // Check registered users from database
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        if (users != null && users.containsKey(username) && users.get(username).equals(password)) {
-            session.setAttribute("user", username);
-            response.sendRedirect("form");
-        } else {
-            request.setAttribute("error", "User not found. Please check your credentials.");
+        try {
+            conn = DatabaseUtil.getConnection();
+            String sql = "SELECT username FROM users WHERE username = ? AND password = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                session.setAttribute("user", username);
+                response.sendRedirect("form");
+            } else {
+                request.setAttribute("error", "Invalid username or password. Please try again.");
+                request.getRequestDispatcher("login.jsp").forward(request, response);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Database error. Please try again later.");
             request.getRequestDispatcher("login.jsp").forward(request, response);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            DatabaseUtil.closeConnection(conn);
         }
     }
 }

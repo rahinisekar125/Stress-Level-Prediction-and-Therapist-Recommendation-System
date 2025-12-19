@@ -59,6 +59,21 @@
         <url-pattern>/logout</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>DatabaseInitServlet</servlet-name>
+        <servlet-class>com.stress.DatabaseInitServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>DatabaseTestServlet</servlet-name>
+        <servlet-class>com.stress.DatabaseTestServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DatabaseTestServlet</servlet-name>
+        <url-pattern>/dbtest</url-pattern>
+    </servlet-mapping>
+
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
